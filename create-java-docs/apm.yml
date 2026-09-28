@@ -1,0 +1,3 @@
+name: create-java-docs
+version: "1.0.0"
+description: Meaningful Javadoc for non-obvious Java APIs.
