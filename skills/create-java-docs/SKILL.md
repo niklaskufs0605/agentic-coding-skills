@@ -1,6 +1,6 @@
 ---
 name: create-java-docs
-description: Create or revise Javadoc for Java 21+ methods and classes whose contracts are not obvious, including newly created APIs with edge cases, side effects, or lifecycle constraints. Use for documentation work only, not implementation, refactoring, bug fixes, or boilerplate comments on straightforward members.
+description: Use when APIs have non-obvious contracts that callers need to understand. Use for methods or classes with edge cases, side effects, null handling, failure conditions, units, ranges, or lifecycle constraints. Skip obvious members and do not use for implementation, refactoring, or bug fixes.
 ---
 
 # Create meaningful Javadoc
