@@ -51,6 +51,26 @@ Prefer AssertJ's fluent API when already available and compatible with project c
 | Blanket `verifyNoMoreInteractions` | Use it only if extra interactions violate the behavior; use targeted `never()` for a specific forbidden side effect. |
 | Unused stubs and mocked data objects | Stub only the collaborators needed for the scenario; use real data objects. |
 
+**AssertJ object properties:** When asserting several exact property values on one object, prefer chaining `ObjectAssert.returns(expected, getter)` over a `satisfies` lambda containing only `assertThat(actual.getX()).isEqualTo(expected)` checks. Keep `satisfies` for assertions that need predicates, non-null checks, or more complex grouping.
+
+Example using the entity's Lombok getters (the repository returns an `Optional`; expected values and the saved entity come from the test setup):
+
+```java
+assertThat(repository.findById(saved.getId()))
+    .get()
+    .returns(ceId, ServiceInformationOutboxEntity::getCeId)
+    .returns("com.otto.selfservice.updated", ServiceInformationOutboxEntity::getCeType)
+    .returns("/management-service", ServiceInformationOutboxEntity::getCeSource)
+    .returns(ceTime, ServiceInformationOutboxEntity::getCeTime)
+    .returns("application/json", ServiceInformationOutboxEntity::getCeDataContentType)
+    .returns(payload, ServiceInformationOutboxEntity::getPayload)
+    .satisfies(
+        actual -> {
+          assertThat(actual.getInsertedAt()).isNotNull();
+          assertThat(actual.getUpdatedAt()).isNotNull();
+        });
+```
+
 ## Determinism and integration lifecycle
 
 Use an injected fixed `Clock` when time drives behavior. For asynchronous work, trigger the action first and wait with a bounded condition/future or existing Awaitility; re-read the observable state on each attempt. A sleep or a wider timestamp tolerance is not synchronization. Ensure transaction visibility permits observation of asynchronous commits.
