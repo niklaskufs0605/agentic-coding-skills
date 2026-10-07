@@ -36,6 +36,22 @@ A mock cannot prove SQL correctness. An embedded substitute is insufficient for 
 - Use meaningful data and explicit expected values. Awkward decimals are useful when testing rounding; state the rounding contract. The supplied reference's `83.17` minus `13%` gives `72.3579`, or `72.36` with final two-decimal HALF_UP rounding; the values are not inherently bad.
 - Parameterize cases that share setup, action, and assertion shape. Keep distinct behaviors separate; do not add branches inside a parameterized test to force them together.
 
+### Reuse common subject setup
+
+When several tests construct the same service with the same dependencies and configuration, declare the subject as an instance field instead of repeating construction in each method. Initialize it in `@BeforeEach` when it depends on `@Mock` fields, so Mockito has initialized the mocks first. A field initializer is suitable when all dependencies are already available. In a test that already needs Spring, use the existing autowired subject; do not start a Spring context merely to share setup.
+
+Keep scenario-specific stubbing and data in the individual test. Construct a local subject only when that scenario requires different constructor arguments or configuration. Class-level placement does not mean a static shared service: preserve per-test isolation and reset mutable state when the test lifecycle reuses instances.
+
+Example: declare `private SomeService service;` and initialize it once per test:
+
+```java
+@BeforeEach
+void setUp() {
+    service = new SomeService(
+        valueA, valueB, valueC);
+}
+```
+
 ## Assertions and mocks
 
 Prefer AssertJ's fluent API when already available and compatible with project conventions. Otherwise use the project's assertions; adding AssertJ is not required. Keep already idiomatic assertions such as `isTrue()` and `isFalse()`.
@@ -69,6 +85,21 @@ assertThat(thrown).isInstanceOf(IllegalStateException.class);
 ```
 
 Capture an exception only when the same instance must be used outside the assertion chain, such as passing it to another operation under test. In that case, use a typed capture such as `assertThrows` or `catchThrowableOfType`. Multiple assertions alone do not justify a variable. Without AssertJ, JUnit `assertThrows` remains valid; do not add a dependency just for this style.
+
+**Exception setup — avoid unnecessary variables:** When a mock must throw an exception and the test only checks its type or contractual properties, construct it inline in `thenThrow(new IllegalStateException(...))` or `doThrow(new IllegalStateException(...))`. Do not introduce `var failure` merely to have an expected exception object. Assert the thrown exception directly:
+
+```java
+when(lockProvider.lock(
+        argThat(configuration -> configuration.getName().equals("eventRelayJob"))))
+    .thenThrow(new IllegalStateException("Database unavailable"));
+
+assertThatThrownBy(service::relayWithLock)
+    .isInstanceOf(IllegalStateException.class);
+
+verify(eventRelayService, never()).relayPendingEvents();
+```
+
+The exception is created in the stub, not inside the assertion's action: that action must call the subject under test. Add message or property assertions when they are part of the contract. Keep a named exception and `.isSameAs(failure)` when propagation of the exact original instance is the behavior being tested; replacing that with a type check would weaken the test. A newly constructed exception in `.isSameAs(new ...)` cannot match the thrown instance.
 
 **AssertJ object properties:** When asserting several exact property values on one object, prefer chaining `ObjectAssert.returns(expected, getter)` over a `satisfies` lambda containing only `assertThat(actual.getX()).isEqualTo(expected)` checks. Keep `satisfies` for assertions that need predicates, non-null checks, or more complex grouping.
 
