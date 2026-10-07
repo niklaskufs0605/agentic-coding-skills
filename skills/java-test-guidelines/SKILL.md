@@ -45,11 +45,30 @@ Prefer AssertJ's fluent API when already available and compatible with project c
 | Size plus indexed element checks | `containsExactly(...)` if order is contractual; `containsExactlyInAnyOrder(...)` otherwise. Both check multiplicity. `contains(...)` alone allows extras. |
 | Repeating property checks across objects | Use `extracting(User::name)` (or the actual accessor), then an assertion with the required ordering semantics. |
 | Adding `isNotNull()` before equality to a known non-null value | Equality already rejects null; add a separate null assertion only if it improves diagnostics. |
-| Manual `try/catch` plus `fail()` for expected errors | Use an exception assertion around only the action under test. With AssertJ, prefer `assertThatThrownBy`; when the exception object is needed later, use typed `assertThrows` or `catchThrowableOfType`. JUnit `assertThrows` is valid, not intrinsically bad. |
+| Manual `try/catch` plus `fail()` for expected errors | Use an exception assertion around only the action under test. With AssertJ, follow the direct fluent exception rule below; without AssertJ, use JUnit `assertThrows`. |
 | Brittle exception-message checks | Check type and relevant structured data; check message text only when it is part of the contract. |
 | Verifying every internal call | Assert the returned value or observable state. Verify a collaborator call when it is itself the contract, e.g. publishing an event, including relevant payload. |
 | Blanket `verifyNoMoreInteractions` | Use it only if extra interactions violate the behavior; use targeted `never()` for a specific forbidden side effect. |
 | Unused stubs and mocked data objects | Stub only the collaborators needed for the scenario; use real data objects. |
+
+**AssertJ exceptions — assert directly:** When AssertJ is available and the exception is only being asserted, use `assertThatThrownBy(...)` and chain the assertions. Do not store `catchThrowable(...)`, `catchThrowableOfType(...)`, or `assertThrows(...)` in a local variable merely to assert it afterward. Type, message, cause, and property checks belong in the fluent chain; use `satisfies` for grouped or custom checks. Separating Act and Assert or adding `// then` is not a reason to capture the exception.
+
+Use:
+
+```java
+assertThatThrownBy(service::someMethod)
+    .isInstanceOf(IllegalStateException.class);
+```
+
+Do not use for this assertion-only case:
+
+```java
+var thrown = catchThrowable(service::someMethod);
+
+assertThat(thrown).isInstanceOf(IllegalStateException.class);
+```
+
+Capture an exception only when the same instance must be used outside the assertion chain, such as passing it to another operation under test. In that case, use a typed capture such as `assertThrows` or `catchThrowableOfType`. Multiple assertions alone do not justify a variable. Without AssertJ, JUnit `assertThrows` remains valid; do not add a dependency just for this style.
 
 **AssertJ object properties:** When asserting several exact property values on one object, prefer chaining `ObjectAssert.returns(expected, getter)` over a `satisfies` lambda containing only `assertThat(actual.getX()).isEqualTo(expected)` checks. Keep `satisfies` for assertions that need predicates, non-null checks, or more complex grouping.
 
