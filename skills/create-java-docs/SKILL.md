@@ -30,6 +30,7 @@ Explain what callers need to use an API correctly. This skill edits documentatio
 
 ## Common mistakes
 
+- **Narrating obvious code:** Do not write Javadocs that merely describe a declaration’s visible implementation. For example, a main method’s Javadoc need not repeat that it starts Spring, calls a runner, and exits; the conventional `args` parameter does not need a boilerplate `@param` description. Document purpose or non-obvious caller-facing behavior instead. If repository rules require Javadocs on every method, keep them concise and meaningful rather than turning them into a play-by-play.
 - **Repeating the name:** “Gets the deadline.” Replace with a useful contract, such as “Returns the deadline in epoch milliseconds, or zero if no deadline is set,” only when verified.
 - **Promising accidental behavior:** accepting a negative argument today does not establish intended support when the existing contract forbids it. Flag that conflict instead of broadening the contract.
 - **Copying tutorial configuration:** retain the project's toolchain and documentation settings; an example's Java source level and plugin version are not requirements.
