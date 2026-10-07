@@ -1,6 +1,6 @@
 ---
 name: create-java-docs
-description: Use when APIs have non-obvious contracts that callers need to understand. Use for methods or classes with edge cases, side effects, null handling, failure conditions, units, ranges, or lifecycle constraints. Skip obvious members and do not use for implementation, refactoring, or bug fixes.
+description: Use when APIs have non-obvious contracts that callers need to understand. Use for methods or classes with edge cases, side effects, null handling, failure conditions, units, ranges, or lifecycle constraints. Skip obvious members and do not use for refactoring, or bug fixes.
 ---
 
 # Create meaningful Javadoc
